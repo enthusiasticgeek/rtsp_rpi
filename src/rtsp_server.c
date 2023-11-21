@@ -31,6 +31,10 @@
 #undef WITH_AUTH
 #define WITH_AUTH 0
 
+
+#undef WITH_OMXENC
+#define WITH_OMXENC 1
+
 /* this timeout is periodically run to clean up the expired sessions from the
  * pool. This needs to be run explicitly currently but might be done
  * automatically as part of the mainloop. */
@@ -78,9 +82,7 @@ main (int argc, char *argv[])
     token =
         gst_rtsp_token_new (GST_RTSP_TOKEN_MEDIA_FACTORY_ROLE, G_TYPE_STRING,
                             "user", NULL);
-    //"user", NULL);
     basic = gst_rtsp_auth_make_basic ("user", "password");
-    //basic = gst_rtsp_auth_make_basic ("user", "password");
 
     gst_rtsp_auth_add_basic (auth, basic, token);
     g_free (basic);
@@ -100,12 +102,26 @@ main (int argc, char *argv[])
      * element with pay%d names will be a stream */
     factory = gst_rtsp_media_factory_new ();
     
+
+#if WITH_OMXENC
+     gst_rtsp_media_factory_set_launch (factory, "( "
+                                       "v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! "
+                                       "omxh264enc  bitrate=10000000 preset-level=1 ! video/x-h264,profile=baseline ! h264parse ! rtph264pay name=pay0 pt=96 " ")");
+     
+#else
+     
+     gst_rtsp_media_factory_set_launch (factory, "( "
+                                       "v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=3/1 ! "
+                                       "x264enc pass=qual quantizer=20 tune=zerolatency ! rtph264pay name=pay0 pt=96 " ")");
+#endif
+
+    /*
     gst_rtsp_media_factory_set_launch (factory, "( "
                                        "videotestsrc ! video/x-raw,width=352,height=288,framerate=15/1 ! "
                                        "x264enc ! rtph264pay name=pay0 pt=96 "
                                        "audiotestsrc ! audio/x-raw,rate=8000 ! "
                                        "alawenc ! rtppcmapay name=pay1 pt=97 " ")");
-   
+    */
 
    //To find microphone connected to webcam use the command line
    //See http://oz9aec.net/software/gstreamer/pulseaudio-device-names
@@ -129,8 +145,7 @@ main (int argc, char *argv[])
 #if WITH_AUTH
     /* add permissions for the user media role */
     permissions = gst_rtsp_permissions_new ();
-    gst_rtsp_permissions_add_role (permissions, rtsp_config.rtsp_server_username,
-                                   //gst_rtsp_permissions_add_role (permissions, "user",
+    gst_rtsp_permissions_add_role (permissions, "user",
                                    GST_RTSP_PERM_MEDIA_FACTORY_ACCESS, G_TYPE_BOOLEAN, TRUE,
                                    GST_RTSP_PERM_MEDIA_FACTORY_CONSTRUCT, G_TYPE_BOOLEAN, TRUE, NULL);
     gst_rtsp_media_factory_set_permissions (factory, permissions);

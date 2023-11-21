@@ -163,6 +163,7 @@ int main (int argc, char *argv[])
     //g_object_set (G_OBJECT (video_sink), "async-handling", TRUE, NULL);
 
 
+    /*
     //Audio Elements
     rtppcmadepay = gst_element_factory_make ("rtppcmadepay",  "rtppcmadepay0");
     g_assert(rtppcmadepay);
@@ -178,7 +179,7 @@ int main (int argc, char *argv[])
     //audio
     g_object_set (G_OBJECT (audio_sink), "sync", FALSE, NULL);
     //g_object_set (G_OBJECT (audio_sink), "async-handling", TRUE, NULL);
-
+    */
 
 
     /* Set video Source */
@@ -199,36 +200,24 @@ int main (int argc, char *argv[])
 
 
     //Make sure: Every elements was created ok
-    if (!pipeline || !rtspsrc || !rtph264depay || !h264parse || !avdec_h264 || !videoqueue0 || !videoconvert || !rtppcmadepay || !alawdec || !audioqueue0 || !audioconvert || !audio_sink) {
+    if (!pipeline || !rtspsrc || !rtph264depay || !h264parse || !avdec_h264 || !videoqueue0 || !videoconvert || !video_sink) {
         g_printerr ("One of the elements wasn't created... Exiting\n");
         return -1;
     }
 
     // Add Elements to the Bin
-    gst_bin_add_many (GST_BIN (pipeline), rtspsrc, rtph264depay, h264parse, avdec_h264, videoqueue0, videoconvert, video_sink, rtppcmadepay, alawdec, audioqueue0, audioconvert, audio_sink, NULL);
+    gst_bin_add_many (GST_BIN (pipeline), rtspsrc, rtph264depay, h264parse, avdec_h264, videoqueue0, videoconvert, video_sink, NULL);
 
     // Link confirmation
     if (!gst_element_link_many (rtph264depay, h264parse, avdec_h264, NULL)){
         g_warning ("Linking part (A)-1 Fail...");
         return -2;
     }
-    //Linking order is important -> start linking all elements from left (near rtspsrc) to right (near videosink)
-    // Link confirmation
-    if (!gst_element_link_many (rtppcmadepay, alawdec, NULL)){
-        g_warning ("Linking part (B)-1 Fail...");
-        return -3;
-    }
     // Link confirmation
     if (!gst_element_link_many (videoqueue0, videoconvert, video_sink, NULL)){
         g_warning ("Linking part (A)-2 Fail...");
         return -4;
     }
-    // Link confirmation
-    if (!gst_element_link_many (audioqueue0, audioconvert, audio_sink, NULL)){
-        g_warning ("Linking part (B)-2 Fail...");
-        return -5;
-    }
-
     // Dynamic Pad Creation
     if(! g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added),rtph264depay))
     {
@@ -240,19 +229,6 @@ int main (int argc, char *argv[])
     {
         g_warning ("Linking part (2) with part (A)-2 Fail...");
     }
-
-    // Dynamic Pad Creation
-    if(! g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added),rtppcmadepay))
-    {
-        g_warning ("Linking part (1) with part (B)-1 Fail...");
-    }
-
-    // Dynamic Pad Creation
-    if(! g_signal_connect (alawdec, "pad-added", G_CALLBACK (on_pad_added),audioqueue0))
-    {
-        g_warning ("Linking part (2) with part (B)-2 Fail...");
-    }
-
 
     /* Run the pipeline */
     g_print ("Playing: %s\n", argv[1]);
