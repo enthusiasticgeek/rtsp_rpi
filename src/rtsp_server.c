@@ -33,7 +33,7 @@
 
 
 #undef WITH_OMXENC
-#define WITH_OMXENC 1
+#define WITH_OMXENC 0
 
 /* this timeout is periodically run to clean up the expired sessions from the
  * pool. This needs to be run explicitly currently but might be done
@@ -106,7 +106,7 @@ main (int argc, char *argv[])
 #if WITH_OMXENC
      gst_rtsp_media_factory_set_launch (factory, "( "
                                        "v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480,framerate=30/1 ! "
-                                       "omxh264enc  bitrate=10000000 preset-level=1 ! video/x-h264,profile=baseline ! h264parse ! rtph264pay name=pay0 pt=96 " ")");
+                                       "omxh264enc  bitrate=20000000 preset-level=0 ! video/x-h264,profile=baseline ! h264parse ! rtph264pay name=pay0 pt=96 " ")");
      
 #else
      
