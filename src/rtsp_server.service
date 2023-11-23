@@ -1,0 +1,13 @@
+[Unit]
+Description=RTSP Server
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+User=pi
+ExecStart=/usr/local/bin/rtsp_server
+
+[Install]
+WantedBy=multi-user.target
